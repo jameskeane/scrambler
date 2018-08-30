@@ -1,0 +1,41 @@
+#cloud-config
+
+#ssh_authorized_keys:
+#  - ssh-rsa key1 foo@gmail
+# Uncomment ^ PUT YOUR KEYS HERE IN A YAML ARRAY
+
+timezone: UTC
+
+apt:
+    sources:
+        docker:
+            # use the xenial channel since docker 17.03 doesn't exist on the
+            # bionic channel (k8s' latest validated docker version is 17.03)
+            source: "deb https://download.docker.com/linux/ubuntu xenial stable"
+            keyid: "9DC858229FC7DD38854AE2D88D81803C0EBFCD88" 
+        kubernetes:
+            # k8s doesn't have a bionic release channel yet
+            source: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+            keyid: "54A647F9048D5688D7DA2ABE6A030B21BA07F4FB"
+
+packages:
+    - [docker-ce, 17.03*]
+    - curl
+    - kubelet
+    - kubeadm
+    - [kubectl, 1.10*] # see: https://github.com/kubernetes/kubernetes/issues/65221
+
+
+# force load certain kernel modules to resolve erroneous preflight error.
+# see: https://github.com/kubernetes/kubeadm/issues/975
+write_files:
+    - path: /etc/modules-load.d/kube-ipvs.conf
+      content: |
+          ip_vs
+          ip_vs_sh
+          ip_vs_wrr
+          ip_vs_rr
+          nf_conntrack_ipv4
+
+runcmd:
+    - systemctl restart systemd-modules-load
