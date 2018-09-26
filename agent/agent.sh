@@ -24,7 +24,7 @@ update_if_needed() {
 
   # Get the latest config, and diff with the currently used one
   # if it's changed then write it and reload
-  latest_conf=$(python generate_conf.py $NODENAME)
+  latest_conf=$(./generate-conf.sh $NODENAME)
   echo "$latest_conf" | diff -s /etc/ipsec.conf - > /dev/null
   if [ $? -ne 0 ]; then
     echo "Cluster configuration has changed, updating network config"

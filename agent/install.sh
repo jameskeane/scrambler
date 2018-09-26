@@ -1,10 +1,11 @@
 #!/bin/bash
+set -e
 
 # Generate and drop the CNI config in place
 # TODO Don't overwrite an existing config... the rest of the code will read the
 # config
 CNI_FILE="/etc/cni/net.d/10-scrambler.conf"
-python ./generate_cni.py $NODENAME > /etc/cni/net.d/10-scrambler.conf
+./generate-cni.sh $NODENAME > $CNI_FILE
 
 # Extract the subnet and bridge name from the cni conf
 NODE_CIDR=$(cat $CNI_FILE | jq -r '.ipam.subnet')
@@ -18,6 +19,7 @@ CIDR_HOSTMIN_CIDR=$(echo $NODE_CIDR | sed 's/\([0-9]*\.[0-9]*\.[0-9]*\.\)0/\11/'
 
 # Create the bridge, assign the cidr, and bring it up
 # NOTE: This has to happen *before* strongswan is started
+echo "scrambler: installing bridge $BRIDGE for $CIDR_HOSTMIN_CIDR"
 brctl addbr $BRIDGE
 ip addr add $CIDR_HOSTMIN_CIDR dev $BRIDGE
 ip link set dev $BRIDGE up
