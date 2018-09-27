@@ -1,0 +1,109 @@
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: scrambler
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: scrambler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: scrambler
+subjects:
+- kind: ServiceAccount
+  name: scrambler
+  namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: scrambler
+  namespace: kube-system
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kube-scrambler-ds
+  namespace: kube-system
+  labels:
+    tier: node
+    app: scrambler
+spec:
+  template:
+    metadata:
+      labels:
+        tier: node
+        app: scrambler
+    spec:
+      hostNetwork: true
+      securityContext:
+        seLinuxOptions:
+          type: spc_t
+      serviceAccountName: scrambler
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      initContainers:
+      - name: install-cni
+        image: quay.io/jameskeane/scrambler
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]
+        env:
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        command:
+        - ./install.sh
+        volumeMounts:
+        - name: cni
+          mountPath: /etc/cni/net.d
+      containers:
+      - name: kube-scrambler-agent
+        image: quay.io/jameskeane/scrambler
+        imagePullPolicy: Always
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN", "SYS_MODULE"]
+        env:
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        workingDir: /var/lib/scrambler
+        command:
+        - ./agent.sh
+        volumeMounts:
+        - name: host-kube-kpi
+          mountPath: /var/lib/kubelet/pki
+        - name: host-kube-ca
+          mountPath: /etc/kubernetes/pki
+        - name: host-modules
+          mountPath: /lib/modules
+      volumes:
+        - name: cni
+          hostPath:
+            path: /etc/cni/net.d
+        - name: host-modules
+          hostPath:
+            path: /lib/modules
+        - name: host-kube-kpi
+          hostPath:
+            path: /var/lib/kubelet/pki
+        - name: host-kube-ca
+          hostPath:
+            path: /etc/kubernetes/pki
