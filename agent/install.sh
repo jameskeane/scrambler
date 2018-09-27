@@ -24,7 +24,23 @@ brctl addbr $BRIDGE
 ip addr add $CIDR_HOSTMIN_CIDR dev $BRIDGE
 ip link set dev $BRIDGE up
 
-# Strongswan creates the xfrm policies that allow routing to anything in the
-# cluster cidr, but we need to route packets originating from the $BRIDGE
-# to the internet ourselves.
-# TODO: See https://wiki.strongswan.org/projects/strongswan/wiki/ForwardingAndSplitTunneling
+# Strongswan creates the xfrm policies to route traffic destined for a remote
+# tunnel. But it does not do anything for other traffic, i.e. the internet,
+# traffic between pods running on the same host), etc.
+
+# Accept traffic originating from the pod bridge with the node's CIDR
+# (i.e. pod traffic)
+iptables -t filter -A FORWARD -s $NODE_CIDR -i $BRIDGE -j ACCEPT \
+         -m comment --comment "scrambler pod traffic"
+
+# NOTE: We need to be careful here, that we don't masquerade traffic that
+#       strongswan should handle. Strongswan's rules are very narrow and
+#       changing the source ip of a packet to outside of a tunneled subnet will
+#       prevent strongswan from handling it. Messing this up will cause traffic
+#       that *should* be ipsec encrypted to pass in the clear!
+#       See: https://wiki.strongswan.org/projects/strongswan/wiki/ForwardingAndSplitTunneling
+# The first command tells netfilter to *not* masq traffic with an ipsec policy
+# The second command will cause it to masq everything else
+iptables -t nat -A POSTROUTING -s $NODE_CIDR \
+         -m policy --dir out --pol ipsec -j ACCEPT
+iptables -t nat -A POSTROUTING -s $NODE_CIDR ! -o $BRIDGE -j MASQUERADE

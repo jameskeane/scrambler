@@ -19,7 +19,6 @@ envsubst <<EOF
   "type": "bridge",
   "bridge": "scrambler0",
   "isGateway": true,
-  "ipMasq": true,
   "ipam": {
     "type": "host-local",
     "subnet": "$pod_cidr",
