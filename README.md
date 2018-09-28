@@ -23,6 +23,9 @@ A sample 3 node cluster can be used for development, using Vagrant.
 
 ```
 # Install required vagrant plugins
+# NOTE: vagrant-cloudinit depends on `mkisofs` make sure it's available,
+#       otherwise provisioning will fail.
+#       See: https://github.com/jameskeane/vagrant-cloudinit#dependencies
 vagrant plugin install vagrant-cloudinit vagrant-hosts
 
 # Bring up the cluster
