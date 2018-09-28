@@ -29,7 +29,7 @@ A sample 3 node cluster can be used for development, using Vagrant.
 vagrant plugin install vagrant-cloudinit vagrant-hosts
 
 # Bring up the cluster
-vagrant up
+vagrant up --provider=virtualbox
 ```
 
 Mkae sure to ignore changes to the `.cluster-join-command` file:
