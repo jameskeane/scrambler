@@ -10,7 +10,7 @@ For more information on how Kubernetes uses PKI certificates, see https://kubern
 
 ## Getting started on Kubernetes
 
-Scrambler can easily be added to a standard kubeadm created cluster. In the
+Scrambler can easily be added to a "standard cluster" (currently tested on kubeadm). In the
 future, support for more customized clusters will be added using the `configz`
 api.
 
