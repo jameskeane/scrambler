@@ -53,8 +53,7 @@ spec:
           type: spc_t
       serviceAccountName: scrambler
       tolerations:
-      - key: node-role.kubernetes.io/master
-        operator: Exists
+      - operator: Exists
         effect: NoSchedule
       initContainers:
       - name: install-cni
