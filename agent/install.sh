@@ -20,8 +20,8 @@ CIDR_HOSTMIN_CIDR=$(echo $NODE_CIDR | sed 's/\([0-9]*\.[0-9]*\.[0-9]*\.\)0/\11/'
 # Create the bridge, assign the cidr, and bring it up
 # NOTE: This has to happen *before* strongswan is started
 echo "scrambler: installing bridge $BRIDGE for $CIDR_HOSTMIN_CIDR"
-brctl addbr $BRIDGE
-ip addr add $CIDR_HOSTMIN_CIDR dev $BRIDGE
+brctl addbr $BRIDGE || true
+ip addr add $CIDR_HOSTMIN_CIDR dev $BRIDGE || true
 ip link set dev $BRIDGE up
 
 # Strongswan creates the xfrm policies to route traffic destined for a remote
